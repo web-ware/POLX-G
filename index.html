@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070a0f"><meta name="description" content="POLX — AI Grand Strategy"><title>POLX — Grand Strategy</title><link rel="stylesheet" href="style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070a0f"><meta name="description" content="POLX — AI Grand Strategy"><title>POLX — Grand Strategy</title><link rel="stylesheet" href="style.css"><script src="https://cdn.amcharts.com/lib/5/index.js"></script><script src="https://cdn.amcharts.com/lib/5/map.js"></script><script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script><script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script><script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script></head>
 <body>
 <div class="game-shell">
   <aside class="sidebar">
@@ -25,11 +25,7 @@
     </header>
 
     <section id="overview" class="panel active">
-      <div class="map-hero">
-        <div class="map-grid"></div><div class="map-lines"></div>
-        <div class="hero-copy"><span class="eyebrow">رئيس الدولة</span><h1>مستقبل <em>POLX</em> بين يديك.</h1><p>كل قرار يغيّر الاقتصاد، المجتمع، العلاقات والعالم من حولك.</p><div class="turn-chip">الدور <b id="turn">01</b></div></div>
-        <div class="country-sigil">P</div>
-      </div>
+      <div class="world-hero"><div id="globe" class="globe"></div><div class="globe-overlay"><span class="eyebrow">POLX WORLD SIMULATION</span><h1>مستقبل <em>POLX</em> بين يديك.</h1><p>اسحب الكرة، قرّب، واضغط على أي دولة لمتابعة العالم.</p><div class="globe-chips"><span>🌍 195 دولة</span><span>● مباشر</span><span>الدور <b id="turn">01</b></span></div></div><div class="globe-legend"><span><i class="legend-player"></i> دولتنا</span><span><i class="legend-focus"></i> دول رئيسية</span><span><i class="legend-world"></i> العالم</span></div></div>
 
       <div id="stats" class="stats"></div>
 
@@ -50,12 +46,13 @@
     </section>
 
     <section id="economy" class="panel"><div class="section-title"><span class="eyebrow">NATIONAL ECONOMY</span><h2>الاقتصاد</h2><p>المؤشرات التي تحدد قوة دولتك واستقرارها.</p></div><div id="economyGrid" class="detail-grid"></div></section>
-    <section id="diplomacy" class="panel"><div class="section-title"><span class="eyebrow">WORLD MAP</span><h2>العالم والدبلوماسية</h2><p>العالم يتفاعل مع قراراتك.</p></div><div id="diplomacyGrid" class="country-grid"></div></section>
+    <section id="diplomacy" class="panel"><div class="section-title"><span class="eyebrow">WORLD INTELLIGENCE</span><h2>العالم والدبلوماسية</h2><p>اضغط على دولة لفتح معلوماتها والتفاعل معها.</p></div><div class="world-page"><div id="worldMapLarge" class="world-map-large"></div><div id="diplomacyGrid" class="country-grid"></div></div></section>
     <section id="government" class="panel"><div class="section-title"><span class="eyebrow">CABINET</span><h2>الحكومة</h2><p>فريقك يساعدك، لكن لكل وزير رؤيته وأولوياته.</p></div><div id="governmentGrid" class="detail-grid"></div></section>
     <section id="news" class="panel"><div class="section-title"><span class="eyebrow">GLOBAL NEWS</span><h2>الأخبار</h2><p>سجل الأحداث والقرارات التي غيّرت عالمك.</p></div><div id="newsGrid" class="news-list"></div></section>
   </main>
 </div>
 
+<dialog id="countryDialog"><div class="modal country-modal"><button type="button" id="closeCountry" class="close">×</button><span class="eyebrow">COUNTRY INTELLIGENCE</span><h2 id="countryName">الدولة</h2><div id="countryDetails"></div></div></dialog>
 <dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal"><button type="button" id="closeSettings" class="close">×</button><span class="eyebrow">AI ENGINE</span><h2>محرك POLX</h2><p>المحرك الحالي: <b>gemini-3-flash-preview</b></p><label>Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div><button class="save" type="submit">حفظ الإعدادات</button><small>المفتاح محفوظ محلياً في هذا المتصفح.</small></form></dialog>
 <script src="app.js"></script>
 </body></html>
