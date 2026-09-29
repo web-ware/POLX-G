@@ -184,26 +184,56 @@ effects.gdp تغيير بالنقاط في الناتج المحلي، effects.a
 async function askGemini(key,command){
  let lastError=null;
  for(const model of MODELS){
-  try{
-   const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","x-goog-api-key":key},
-    body:JSON.stringify({
-     contents:[{role:"user",parts:[{text:command}]}],
-     systemInstruction:{parts:[{text:buildSystem(command)}]},
-     generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
-    })
-   });
-   const data=await res.json();
-   if(!res.ok){
-    lastError=new Error(data?.error?.message||("فشل "+model));
-    continue;
-   }
-   const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
-   const result=normalizeResult(extractJSON(raw));
-   if(result)return {...result,_model:model};
-   lastError=new Error("نتيجة غير منظمة من "+model);
-  }catch(err){lastError=err}
+  for(let attempt=1;attempt<=2;attempt++){
+   try{
+    const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
+     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
+     body:JSON.stringify({
+      contents:[{role:"user",parts:[{text:command}]}],
+      systemInstruction:{parts:[{text:buildSystem(command)}]},
+      generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
+     })
+    });
+    const data=await res.json();
+    if(!res.ok){lastError=new Error(data?.error?.message||("فشل "+model));break}
+    const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+    const result=normalizeResult(extractJSON(raw));
+    if(result)return {...result,_model:model};
+    lastError=new Error("نتيجة غير منظمة من "+model);
+    if(attempt===1)command+="\nأعد المحاولة: JSON فقط، ويجب أن يبدأ مباشرة بـ { وينتهي بـ }.";
+   }catch(err){lastError=err;break}
+  }
  }
  throw lastError||new Error("تعذر الحصول على استجابة من نماذج Gemini");
-};
+}
+
+async function execute(command){
+ const key=localStorage.getItem(KEY);
+ if(!key){openSettings();return}
+ busy=true;$("#execute").disabled=true;$("#execute").textContent="جاري المحاكاة…";
+ try{
+  const result=await askGemini(key,command);
+  applyAI(result,command);
+ }catch(err){
+  addFeed("تعذر تنفيذ القرار","لم يُحتسب الدور لأن جميع محركات Gemini فشلت: "+err.message,"خطأ");
+  addAlert("تنبيه AI","لم يُحتسب هذا القرار. يمكنك إعادة إرساله.");
+  save();render();
+ }finally{
+  busy=false;$("#execute").disabled=false;$("#execute").textContent="تنفيذ القرار ↵";
+ }
+}
+
+function openSettings(){apiKey.value=localStorage.getItem(KEY)||"";$("#settingsDialog").showModal()}
+const apiKey=$("#apiKey");
+$("#settings").onclick=openSettings;$("#settingsTop").onclick=openSettings;
+$("#closeSettings").onclick=()=>$("#settingsDialog").close();
+$("#toggleKey").onclick=()=>{apiKey.type=apiKey.type==="password"?"text":"password";$("#toggleKey").textContent=apiKey.type==="password"?"إظهار":"إخفاء"};
+$("#settingsForm").addEventListener("submit",e=>{e.preventDefault();localStorage.setItem(KEY,apiKey.value.trim());$("#settingsDialog").close()});
+$("#commandForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#command").value.trim();if(v&&!busy)execute(v)});
+document.querySelectorAll("[data-command]").forEach(b=>b.onclick=()=>setCommand(b.dataset.command,false));
+$("#newGame").onclick=()=>{if(confirm("بدء عالم جديد وحذف تقدم العالم الحالي؟")){state=structuredClone(defaultState);lastDecision="";$("#command").value="";save();render()}};
+$("#reset").onclick=()=>{if(confirm("إعادة الحملة بالكامل؟")){state=structuredClone(defaultState);lastDecision="";$("#command").value="";save();render()}};
+$("#closeCountry").onclick=()=>$("#countryDialog").close();
+$("#command").addEventListener("input",updateLastDecision);
+render();
+initGlobe();
