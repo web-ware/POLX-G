@@ -1,6 +1,6 @@
 const $=s=>document.querySelector(s);
 const KEY="polx_gemini_key_v3",SAVE_KEY="polx_world_v1";
-const MODELS=["gemini-3-flash-preview","gemini-2.5-flash","gemini-2.5-flash-lite"];
+const MODELS=["gemini-3.5-flash","gemini-3.5-flash-lite","gemini-3-flash-preview","gemini-2.5-flash"];
 const COUNTRIES={
  DZ:{name:"الجزائر",flag:"🇩🇿",gdp:267,pop:"46.0M",stability:73,approval:68,army:54,prestige:42,relation:100,industry:52,energy:80,trade:58,role:"الدولة التي تقودها"},
  MA:{name:"المغرب",flag:"🇲🇦",gdp:146,pop:"37.8M",stability:67,approval:61,army:48,prestige:38,relation:35,industry:55,energy:62,trade:61,role:"دولة مجاورة"},
