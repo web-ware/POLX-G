@@ -60,7 +60,7 @@ function addHistory(command,result){state.history.unshift({command,...result,tur
 
 function render(){
  $("#countryTitle").textContent=state.country;
- $("#dateLine").textContent="2028 • "+state.season+" • الدور "+state.turn;
+ $("#dateLine").textContent=state.year+" • "+state.season+" • الدور "+state.turn;
  $("#turn").textContent=String(state.turn).padStart(2,"0");
 
  const stats=[
@@ -133,7 +133,9 @@ function nextTurn(){
 
 function extractJSON(raw){
  if(!raw)return null;
- let text=String(raw).trim().replace(/^\s*\`\`\`(?:json)?\s*/i,"").replace(/\s*\`\`\`\s*$/,"").trim();
+ let text=String(raw).trim();
+ const fence="\\x60\\x60\\x60";
+ text=text.replace(new RegExp("^"+fence+"(?:json)?\\s*","i"),"").replace(new RegExp("\\s*"+fence+"$"),"").trim();
  try{return JSON.parse(text)}catch{}
  const start=text.indexOf("{"),end=text.lastIndexOf("}");
  if(start>=0&&end>start){try{return JSON.parse(text.slice(start,end+1))}catch{}}
