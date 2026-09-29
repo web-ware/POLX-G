@@ -1,1 +1,72 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1020"><meta name="description" content="POLX-G — واجهة دردشة حديثة مع Gemini"><title>POLX-G AI</title><link rel="stylesheet" href="style.css"></head><body><div class="app-shell"><aside class="sidebar"><div class="brand"><span class="brand-mark">✦</span><div><strong>POLX-G</strong><small>AI CHAT</small></div></div><button id="newChat" class="new-chat">＋ محادثة جديدة</button><div class="sidebar-section"><span>الإعدادات</span><button id="apiSettings" class="side-action">⚙️ مفتاح Gemini</button><button id="clearChat" class="side-action">🗑️ مسح المحادثة</button></div><div class="sidebar-footer">Gemini API • محادثة مباشرة</div></aside><main class="chat"><header class="topbar"><div><h1>POLX-G AI</h1><p><span class="status-dot"></span> جاهز للدردشة</p></div><button id="settingsTop" class="icon-btn" aria-label="الإعدادات">⚙</button></header><section id="messages" class="messages" aria-live="polite"><div id="welcome" class="welcome"><div class="welcome-icon">✦</div><h2>وش حاب تسقسي؟</h2><p>اكتب سؤالك وخلي Gemini يجاوبك. تقدر تستعمل العربية، الفرنسية أو الإنجليزية.</p><div class="suggestions"><button data-prompt="اشرحلي مفهوم الذكاء الاصطناعي بطريقة بسيطة">🤖 اشرحلي الذكاء الاصطناعي</button><button data-prompt="ساعدني نكتب خطة لمشروع ويب">💻 ساعدني في مشروع</button><button data-prompt="اعطني فكرة لتعلم البرمجة">📚 فكرة للتعلم</button></div></div></section><form id="composer" class="composer"><textarea id="prompt" rows="1" placeholder="اكتب رسالتك هنا..." autocomplete="off"></textarea><button id="send" type="submit" aria-label="إرسال">➤</button></form><div class="hint">Enter للإرسال • Shift + Enter لسطر جديد</div></main></div><dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal"><button type="button" id="closeSettings" class="modal-close">×</button><h2>إعدادات Gemini</h2><p class="modal-note">المفتاح يُحفظ في متصفحك فقط ولا يتم تخزينه في GitHub. لا تضع مفتاحك داخل ملفات المشروع.</p><label for="apiKey">Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div><label for="model">الموديل</label><select id="model"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.6-flash">Gemini 3.6 Flash</option><option value="gemini-3.5-flash">Gemini 3.5 Flash</option><option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option><option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option></select><button id="saveSettings" class="save-btn" value="default">حفظ الإعدادات</button><p id="settingsStatus" class="settings-status"></p></form></dialog><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080b12">
+<meta name="description" content="POLX — AI Grand Strategy Sandbox">
+<title>POLX — AI Grand Strategy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">P</div><div><strong>POLX</strong><small>AI GRAND STRATEGY</small></div></div>
+    <button id="newGame" class="primary">＋ دولة جديدة</button>
+    <nav>
+      <button class="nav active" data-panel="overview">◈ نظرة عامة</button>
+      <button class="nav" data-panel="economy">◫ الاقتصاد</button>
+      <button class="nav" data-panel="diplomacy">◎ الدبلوماسية</button>
+      <button class="nav" data-panel="government">♜ الحكومة</button>
+      <button class="nav" data-panel="news">▤ الأخبار</button>
+    </nav>
+    <div class="side-bottom">
+      <button id="settings" class="nav">⚙ إعدادات Gemini</button>
+      <button id="reset" class="nav danger">↻ إعادة العالم</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div><span class="eyebrow">WORLD SIMULATION</span><h1 id="countryTitle">الجمهورية الجديدة</h1><p id="dateLine">السنة 2028 • الربيع • الدور 1</p></div>
+      <div class="top-actions"><span class="model-pill">● gemini-3-flash-preview</span><button id="settingsTop">⚙</button></div>
+    </header>
+
+    <section id="overview" class="panel active">
+      <div class="hero">
+        <div><span class="eyebrow">رئاسة الدولة</span><h2>أنت تقود الدولة. <em>العالم لا ينتظرك.</em></h2><p>اكتب أي قرار تريده بحرية. المحرك يحاول تحويله إلى آثار اقتصادية واجتماعية ودبلوماسية وأحداث مستقبلية.</p></div>
+        <div class="turn-box"><b id="turn">01</b><span>الدور</span></div>
+      </div>
+      <div id="stats" class="stats"></div>
+      <div class="grid">
+        <section class="card command-card">
+          <div class="card-head"><div><span class="eyebrow">COMMAND CENTER</span><h3>ماذا ستفعل؟</h3></div><span class="live">LIVE</span></div>
+          <div class="command-examples">
+            <button data-command="أطلق برنامجاً وطنياً لتطوير الصناعة المحلية وخصص له 5 مليارات من الخزينة.">🏭 تطوير الصناعة</button>
+            <button data-command="أعلن اتفاقاً تجارياً جديداً مع دولة مجاورة وخفض الرسوم الجمركية تدريجياً.">🤝 اتفاق تجاري</button>
+            <button data-command="أريد خطة لخفض التضخم دون التسبب في ركود اقتصادي.">📉 مكافحة التضخم</button>
+            <button data-command="أطلق استراتيجية وطنية للطاقة المتجددة على مدى عشر سنوات.">⚡ الطاقة</button>
+          </div>
+          <form id="commandForm" class="command-box">
+            <textarea id="command" rows="3" placeholder="مثال: أريد تحويل 10% من الميزانية إلى التعليم وبناء جامعات جديدة..."></textarea>
+            <div><span>AI سيحلل القرار والعواقب المحتملة</span><button id="execute" type="submit">تنفيذ القرار ↵</button></div>
+          </form>
+        </section>
+        <section class="card feed-card"><div class="card-head"><div><span class="eyebrow">WORLD FEED</span><h3>آخر التطورات</h3></div></div><div id="feed"></div></section>
+      </div>
+    </section>
+
+    <section id="economy" class="panel"><div class="section-title"><span class="eyebrow">ECONOMY</span><h2>اقتصاد الدولة</h2></div><div id="economyGrid" class="detail-grid"></div></section>
+    <section id="diplomacy" class="panel"><div class="section-title"><span class="eyebrow">DIPLOMACY</span><h2>العلاقات الدولية</h2></div><div id="diplomacyGrid" class="country-grid"></div></section>
+    <section id="government" class="panel"><div class="section-title"><span class="eyebrow">GOVERNMENT</span><h2>الحكومة</h2></div><div id="governmentGrid" class="detail-grid"></div></section>
+    <section id="news" class="panel"><div class="section-title"><span class="eyebrow">NEWSROOM</span><h2>أرشيف العالم</h2></div><div id="newsGrid" class="news-list"></div></section>
+  </main>
+</div>
+
+<dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal">
+<button type="button" id="closeSettings" class="close">×</button><span class="eyebrow">AI ENGINE</span><h2>إعدادات POLX</h2>
+<p>POLX يعتمد حالياً على <b>gemini-3-flash-preview</b> فقط.</p>
+<label>Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div>
+<button class="save" type="submit">حفظ</button><small>المفتاح يبقى في هذا المتصفح ولا يوضع في GitHub.</small>
+</form></dialog>
+<script src="app.js"></script>
+</body></html>
