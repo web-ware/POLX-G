@@ -1,6 +1,10 @@
 const $=s=>document.querySelector(s);
 const KEY="polxg_gemini_key",STATE="polx_state_v2";
-const MODEL="gemini-3-flash-preview";
+const MODELS=[
+ "gemini-3-flash-preview",
+ "gemini-2.5-flash",
+ "gemini-2.5-flash-lite"
+];
 
 const WORLD_COUNTRIES={
  DZ:{name:"الجزائر",flag:"🇩🇿",role:"دولتنا",gdp:67,industry:51,energy:82,stability:73,relation:100,trade:58},
