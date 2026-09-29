@@ -8,7 +8,7 @@ const WORLD_COUNTRIES={
  US:{name:"الولايات المتحدة",flag:"🇺🇸",role:"دولة رئيسية",gdp:96,industry:91,energy:84,stability:70,relation:18,trade:41},
  FR:{name:"فرنسا",flag:"🇫🇷",role:"دولة رئيسية",gdp:82,industry:78,energy:76,stability:75,relation:42,trade:64}
 };
-let globeRoot=null,globeChart=null,worldSeries=null;
+let globeRoot=null,globeChart=null,worldSeries=null,largeWorldReady=false;
 function countryById(id){return WORLD_COUNTRIES[String(id||"").toUpperCase()]||null}
 function countryInfo(id){
  const c=countryById(id);
@@ -60,7 +60,13 @@ function initGlobe(targetId,large=false){
 }
 function initWorldMaps(){
  const a=initGlobe("globe",false); if(a){globeRoot=a.root;globeChart=a.chart;worldSeries=a.series}
- initGlobe("worldMapLarge",true);
+}
+function ensureLargeWorldMap(){
+ if(largeWorldReady)return;
+ const el=document.getElementById("worldMapLarge");
+ if(!el)return;
+ const a=initGlobe("worldMapLarge",true);
+ if(a){largeWorldReady=true;setTimeout(()=>a.chart.appear(500,50),30)}
 }
 
 const defaultState={
@@ -165,7 +171,7 @@ $("#toggleKey").onclick=()=>{apiKey.type=apiKey.type==="password"?"text":"passwo
 $("#settingsForm").addEventListener("submit",e=>{e.preventDefault();localStorage.setItem(KEY,apiKey.value.trim());$("#settingsDialog").close()});
 $("#commandForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#command").value.trim();if(v)execute(v)});
 document.querySelectorAll("[data-command]").forEach(b=>b.onclick=()=>{$("#command").value=b.dataset.command;$("#command").focus()});
-document.querySelectorAll(".nav[data-panel]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav[data-panel]").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));$("#"+b.dataset.panel).classList.add("active")});
+document.querySelectorAll(".nav[data-panel]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav[data-panel]").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));$("#"+b.dataset.panel).classList.add("active");if(b.dataset.panel==="diplomacy")ensureLargeWorldMap()});
 $("#newGame").onclick=()=>{if(confirm("بدء عالم جديد وحذف تقدم العالم الحالي؟")){state=structuredClone(defaultState);save();render()}};
 if(document.getElementById("closeCountry"))$("#closeCountry").onclick=()=>$("#countryDialog").close();
 $("#reset").onclick=()=>{if(confirm("إعادة العالم بالكامل؟")){state=structuredClone(defaultState);save();render()}};
