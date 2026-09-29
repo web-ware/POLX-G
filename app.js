@@ -1,10 +1,6 @@
 const $=s=>document.querySelector(s);
 const KEY="polxg_gemini_key",STATE="polx_state_v2";
-const MODELS=[
- "gemini-3-flash-preview",
- "gemini-2.5-flash",
- "gemini-2.5-flash-lite"
-];
+const MODEL="gemini-3-flash-preview";
 
 const WORLD_COUNTRIES={
  DZ:{name:"الجزائر",flag:"🇩🇿",role:"دولتنا",gdp:67,industry:51,energy:82,stability:73,relation:100,trade:58},
@@ -163,7 +159,7 @@ function applyAI(result,command){
   const entry=Object.entries(WORLD_COUNTRIES).find(([,c])=>c.name===r.name);
   if(entry)state.relations[entry[0]]=clamp((state.relations[entry[0]]??entry[1].relation)+r.change,-100,100);
  });
- addFeed(result.event_title,result.summary,"قرار • "+(result._model||MODELS[0]));
+ addFeed(result.event_title,result.summary,"قرار");
  if(result.news)addFeed("خبر دولي",result.news,"أخبار");
  addAlert("قرار جديد",result.event_title+" — "+result.summary);
  addHistory(command,result);
@@ -181,27 +177,24 @@ effects.gdp تغيير بالنقاط في الناتج المحلي، effects.a
 أمر اللاعب: ${command}`;
 }
 
-async function askGemini(key,command){
- let lastError=null;
- for(const model of MODELS){
-  try{
-   const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
-    method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
-    body:JSON.stringify({
-     contents:[{role:"user",parts:[{text:command}]}],
-     systemInstruction:{parts:[{text:buildSystem(command)}]},
-     generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
-    })
-   });
-   const data=await res.json();
-   if(!res.ok){lastError=new Error(data?.error?.message||("فشل "+model));continue}
-   const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
-   const result=normalizeResult(extractJSON(raw));
-   if(result)return {...result,_model:model};
-   lastError=new Error("نتيجة غير منظمة من "+model);
-  }catch(err){lastError=err}
+async function askGemini(key,command,attempt=1){
+ const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{
+  method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
+  body:JSON.stringify({
+   contents:[{role:"user",parts:[{text:command}]}],
+   systemInstruction:{parts:[{text:buildSystem(command)}]},
+   generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
+  })
+ });
+ const data=await res.json();
+ if(!res.ok)throw new Error(data?.error?.message||"تعذر الاتصال بالمحرك");
+ const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+ const result=normalizeResult(extractJSON(raw));
+ if(result)return result;
+ if(attempt<2){
+  return askGemini(key,command+"\nأعد المحاولة: JSON فقط، ويجب أن يبدأ مباشرة بـ { وينتهي بـ }.",2);
  }
- throw lastError||new Error("تعذر الحصول على استجابة من نماذج Gemini");
+ throw new Error("المحرك أرسل نتيجة غير منظمة بعد محاولتين.");
 }
 
 async function execute(command){
