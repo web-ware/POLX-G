@@ -1,6 +1,68 @@
 const $=s=>document.querySelector(s);
 const KEY="polxg_gemini_key",STATE="polx_state_v1";
 const MODEL="gemini-3-flash-preview";
+const WORLD_COUNTRIES={
+ DZ:{name:"الجزائر",flag:"🇩🇿",role:"دولتنا",gdp:67,industry:51,energy:82,stability:73,relation:100,trade:58},
+ SA:{name:"السعودية",flag:"🇸🇦",role:"دولة رئيسية",gdp:76,industry:62,energy:94,stability:78,relation:55,trade:72},
+ RU:{name:"روسيا",flag:"🇷🇺",role:"دولة رئيسية",gdp:72,industry:79,energy:96,stability:61,relation:31,trade:48},
+ US:{name:"الولايات المتحدة",flag:"🇺🇸",role:"دولة رئيسية",gdp:96,industry:91,energy:84,stability:70,relation:18,trade:41},
+ FR:{name:"فرنسا",flag:"🇫🇷",role:"دولة رئيسية",gdp:82,industry:78,energy:76,stability:75,relation:42,trade:64}
+};
+let globeRoot=null,globeChart=null,worldSeries=null;
+function countryById(id){return WORLD_COUNTRIES[String(id||"").toUpperCase()]||null}
+function countryInfo(id){
+ const c=countryById(id);
+ if(c)return c;
+ return {name:"دولة من العالم",flag:"🌐",role:"دولة عالمية",gdp:50,industry:50,energy:50,stability:50,relation:0,trade:50};
+}
+function showCountry(id){
+ const c=countryInfo(id);
+ $("#countryName").textContent=c.flag+" "+c.name;
+ $("#countryDetails").innerHTML='<div class="country-info">'+[
+  ["الدور",c.role],["الناتج المحلي",c.gdp+"/100"],["الصناعة",c.industry+"/100"],["الطاقة",c.energy+"/100"],
+  ["الاستقرار",c.stability+"/100"],["العلاقة معنا",(c.relation>=0?"+":"")+c.relation],["التجارة",c.trade+"/100"],["الحالة","نشطة"]
+ ].map(x=>'<div class="info"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join("")+'</div><p class="country-note">هذه طبقة المعلومات الحالية في محاكاة POLX. الدول الخمس الرئيسية لديها بيانات كاملة، وباقي دول العالم تظهر كبنية قابلة للتوسع.</p>';
+ $("#countryDialog").showModal();
+}
+function colorForCountry(id){
+ const code=String(id||"").toUpperCase();
+ if(code==="DZ")return am5.color(0x55d69a);
+ if(WORLD_COUNTRIES[code])return am5.color(0x8879ff);
+ return am5.color(0x526176);
+}
+function initGlobe(targetId,large=false){
+ const target=document.getElementById(targetId);
+ if(!target||typeof am5==="undefined"||typeof am5map==="undefined"||typeof am5geodata_worldLow==="undefined")return;
+ const root=am5.Root.new(targetId);
+ if(!large)globeRoot=root;
+ root.setThemes([am5themes_Animated.new(root),am5themes_Dark.new(root)]);
+ const chart=root.container.children.push(am5map.MapChart.new(root,{projection:am5map.geoOrthographic(),panX:"rotateX",panY:"rotateY",minZoomLevel:.85,zoomLevel:.95}));
+ const background=chart.series.push(am5map.MapPolygonSeries.new(root,{}));
+ background.data.push({geometry:am5map.getGeoRectangle(90,180,-90,-180)});
+ background.mapPolygons.template.setAll({fill:root.interfaceColors.get("alternativeBackground"),fillOpacity:.035,strokeOpacity:0});
+ const graticule=chart.series.push(am5map.GraticuleSeries.new(root,{}));
+ graticule.mapLines.template.setAll({strokeOpacity:.08});
+ const series=chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:am5geodata_worldLow}));
+ series.mapPolygons.template.setAll({fill:am5.color(0x526176),fillOpacity:.78,stroke:am5.color(0x101923),strokeWidth:.45,tooltipText:"{name}"});
+ series.mapPolygons.template.adapters.add("fill",(fill,target)=>{
+   const id=target.dataItem?.get("id");
+   return colorForCountry(id);
+ });
+ series.mapPolygons.template.states.create("hover",{fill:am5.color(0x38bdf8),fillOpacity:1});
+ series.mapPolygons.template.events.on("click",ev=>{
+   const id=ev.target.dataItem?.get("id");
+   if(id)showCountry(id);
+ });
+ chart.set("zoomControl",am5map.ZoomControl.new(root,{}));
+ chart.appear(700,80);
+ if(!large)chart.animate({key:"rotationX",from:-25,to:335,duration:45000,loops:Infinity});
+ return {root,chart,series};
+}
+function initWorldMaps(){
+ const a=initGlobe("globe",false); if(a){globeRoot=a.root;globeChart=a.chart;worldSeries=a.series}
+ initGlobe("worldMapLarge",true);
+}
+
 const defaultState={
  country:"جمهورية POLX",year:2028,season:"الربيع",turn:1,
  treasury:82,gdp:67,inflation:4.2,unemployment:8.1,industry:51,energy:82,approval:73,influence:48,
@@ -57,6 +119,7 @@ function nextTurn(){
  state.approval=clamp(state.approval+(state.unemployment>12?-1:.15),0,100);
  state.gdp=clamp(state.gdp+(state.industry>60?.3:-.05),0,100);
  save();render();
+initWorldMaps();
 }
 function extractJSON(text){
  const clean=text.replace(/\`\`\`json|\`\`\`/g,"").trim();
@@ -104,5 +167,6 @@ $("#commandForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#c
 document.querySelectorAll("[data-command]").forEach(b=>b.onclick=()=>{$("#command").value=b.dataset.command;$("#command").focus()});
 document.querySelectorAll(".nav[data-panel]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav[data-panel]").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));$("#"+b.dataset.panel).classList.add("active")});
 $("#newGame").onclick=()=>{if(confirm("بدء عالم جديد وحذف تقدم العالم الحالي؟")){state=structuredClone(defaultState);save();render()}};
+if(document.getElementById("closeCountry"))$("#closeCountry").onclick=()=>$("#countryDialog").close();
 $("#reset").onclick=()=>{if(confirm("إعادة العالم بالكامل؟")){state=structuredClone(defaultState);save();render()}};
 render();
