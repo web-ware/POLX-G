@@ -1,64 +1,112 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#070a0f"><meta name="description" content="POLX — AI Grand Strategy">
-<title>POLX — Grand Strategy</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POLX — World Strategy</title>
+<meta name="theme-color" content="#11100d">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
 </head>
 <body>
-<main class="polx-app">
-  <header class="topbar">
-    <div class="brand-inline"><div class="logo">P</div><div><strong>POLX</strong><small>GRAND STRATEGY</small></div></div>
-    <div class="country-head"><span class="live-dot"></span><div><b id="countryTitle">الجزائر</b><small id="dateLine">2028 • الربيع • الدور 1</small></div></div>
-    <div class="top-actions"><span class="model-pill">GEMINI 3 FLASH</span><button id="newGame" title="حملة جديدة">＋</button><button id="settingsTop" title="إعدادات AI">⚙</button></div>
+<div class="game">
+  <header class="top">
+    <div class="title"><div class="crest">P</div><div><b>POLX</b><small>WORLD STRATEGY</small></div></div>
+    <div class="nation"><span id="flag">🇩🇿</span><div><b id="nationName">الجزائر</b><small id="date">1446 • الربيع • الدور 1</small></div></div>
+    <div class="resources">
+      <span>💰 <b id="money">1200</b></span><span>👥 <b id="pop">46.0M</b></span><span>⭐ <b id="prestige">42</b></span>
+    </div>
+    <div class="topBtns"><button id="saveBtn">حفظ</button><button id="settingsBtn">⚙</button></div>
   </header>
 
-  <section class="dashboard">
-    <aside class="left-rail">
-      <div class="rail-title"><span>LIVE FEED</span><b>نبض الدولة والعالم</b></div>
-      <div id="feed" class="feed"></div>
-      <div class="rail-title political"><span>POLITICAL ALERTS</span><b>الإشعارات السياسية</b></div>
-      <div id="alerts" class="alerts"></div>
+  <main class="board">
+    <aside class="left">
+      <section class="panel nationCard">
+        <div class="sectionTitle"><span>الدولة</span><em id="stabilityBadge">مستقرة</em></div>
+        <div class="bigStat"><b id="gdp">$267B</b><small>الناتج المحلي</small></div>
+        <div class="bars">
+          <label>الاستقرار <b id="stability">73</b><i><u id="stabilityBar"></u></i></label>
+          <label>رضا الشعب <b id="approval">68</b><i><u id="approvalBar"></u></i></label>
+          <label>الجيش <b id="army">54</b><i><u id="armyBar"></u></i></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="sectionTitle"><span>إجراءات الدولة</span><small>قرارات</small></div>
+        <div class="actions">
+          <button data-action="economy"><strong>◈</strong><span>الاقتصاد<small>ضرائب واستثمار</small></span></button>
+          <button data-action="military"><strong>⚔</strong><span>الجيش<small>تجنيد وتسليح</small></span></button>
+          <button data-action="diplomacy"><strong>♜</strong><span>الدبلوماسية<small>تحالفات ومعاهدات</small></span></button>
+          <button data-action="research"><strong>⌬</strong><span>التطوير<small>تقنية وبنية</small></span></button>
+        </div>
+      </section>
+
+      <section class="panel feedPanel">
+        <div class="sectionTitle"><span>الأخبار</span><small id="newsCount">0</small></div>
+        <div id="news" class="news"></div>
+      </section>
     </aside>
 
-    <section class="center-stage">
-      <div class="map-head"><div><span class="eyebrow">WORLD SIMULATION</span><h1>العالم بين يديك</h1><p>اضغط على أي دولة لفتح ملفها وقراراتها.</p></div><div class="world-chip">🌍 195 دولة <i></i> مباشر</div></div>
-      <div class="world-hero"><div id="globe" class="globe"></div><div class="globe-legend"><span><i class="legend-player"></i> الجزائر</span><span><i class="legend-focus"></i> دول رئيسية</span><span><i class="legend-world"></i> العالم</span></div></div>
-
-      <div class="command-card">
-        <div class="command-head"><div><span class="eyebrow">PRESIDENTIAL ORDERS</span><h2>ماذا ستفعل؟</h2></div><span class="ai-badge">AI SIMULATION</span></div>
-        <div id="lastDecision" class="last-decision"><span>آخر قرار</span><b>لا يوجد قرار غير مُرسل</b></div>
-        <div class="quick-actions">
-          <button data-command="أطلق برنامجاً لتطوير الصناعة المحلية وخصص له 5 مليارات دولار."><b>🏭</b><span>الصناعة<small>استثمار</small></span></button>
-          <button data-command="اقترح اتفاقية تجارية مع السعودية وخفض الرسوم تدريجياً."><b>🤝</b><span>التجارة<small>دبلوماسية</small></span></button>
-          <button data-command="ضع خطة لخفض التضخم مع حماية النمو الاقتصادي."><b>📉</b><span>الاقتصاد<small>استقرار</small></span></button>
-          <button data-command="أطلق استراتيجية وطنية للطاقة المتجددة."><b>⚡</b><span>الطاقة<small>مستقبل</small></span></button>
+    <section class="center">
+      <div class="mapTop">
+        <div><span>خريطة العالم</span><small>اضغط على دولة لفتح معلوماتها</small></div>
+        <div class="mapModes">
+          <button class="active" data-mode="political">سياسي</button>
+          <button data-mode="economy">اقتصاد</button>
+          <button data-mode="relations">علاقات</button>
         </div>
-        <form id="commandForm" class="command-box">
-          <textarea id="command" rows="3" placeholder="اكتب قرارك بحرية... مثال: أريد زيادة الاستثمار في التعليم."></textarea>
-          <div class="command-foot"><span>↳ الذكاء الاصطناعي يحاكي النتائج والعواقب</span><button id="execute" type="submit">تنفيذ القرار <b>↵</b></button></div>
-        </form>
+      </div>
+      <div id="globe" class="globe"></div>
+      <div class="mapHint">🖱️ اسحب للدوران • عجلة الماوس للتكبير • اختر دولة</div>
+
+      <div class="command">
+        <div class="commandHead"><b>مركز القيادة</b><span id="aiStatus">AI جاهز</span></div>
+        <div id="decisionPreview" class="preview">اختر أمراً أو اكتب قراراً للذكاء الاصطناعي...</div>
+        <div class="commandRow">
+          <input id="command" placeholder="مثال: أريد بناء 3 مصانع ورفع الاستثمار في البنية التحتية">
+          <button id="execute">تنفيذ القرار</button>
+          <button id="endTurn" class="end">نهاية الدور ▶</button>
+        </div>
       </div>
     </section>
 
-    <aside class="right-rail">
-      <div class="rail-title"><span>NATIONAL STATUS</span><b>بيانات الجزائر</b></div>
-      <div id="stats" class="national-stats"></div>
-      <div class="mini-card"><span>الدور الحالي</span><b id="turn">01</b><small>كل قرار يمرّر الزمن للأمام</small></div>
-      <div class="mini-card"><span>الحالة الدولية</span><b>مستقرة</b><small>راقب الأخبار وردود الدول</small></div>
-      <button id="settings" class="settings-btn">⚙ محرك الذكاء</button>
-      <button id="reset" class="reset-btn">↻ إعادة الحملة</button>
-    </aside>
-  </section>
-</main>
+    <aside class="right">
+      <section class="panel countryPanel">
+        <div class="sectionTitle"><span id="targetFlag">🌍</span><b id="targetName">معلومات الدولة</b></div>
+        <div id="targetInfo" class="targetInfo"><p>اختر دولة من الخريطة.</p></div>
+        <div id="countryActions" class="countryActions"></div>
+      </section>
 
-<dialog id="countryDialog"><div class="modal country-modal"><button type="button" id="closeCountry" class="close">×</button><span class="eyebrow">COUNTRY INTELLIGENCE</span><h2 id="countryName">الدولة</h2><div id="countryDetails"></div></div></dialog>
-<dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal"><button type="button" id="closeSettings" class="close">×</button><span class="eyebrow">AI ENGINE</span><h2>محرك POLX</h2><p>المحرك الوحيد: <b>gemini-3-flash-preview</b></p><label>Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div><button class="save" type="submit">حفظ الإعدادات</button><small>المفتاح محفوظ محلياً في هذا المتصفح.</small></form></dialog>
+      <section class="panel">
+        <div class="sectionTitle"><span>العالم</span><small>أهم القوى</small></div>
+        <div id="relations" class="relations"></div>
+      </section>
+
+      <section class="panel objectives">
+        <div class="sectionTitle"><span>أهداف الدولة</span></div>
+        <div id="objectives"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<dialog id="settings">
+ <form method="dialog" class="modal">
+  <button class="x" value="cancel">×</button>
+  <h2>إعدادات المحرك</h2>
+  <p>المحرك يستخدم Gemini لتفسير الأوامر ومحاكاة الأحداث.</p>
+  <label>Gemini API Key</label>
+  <input id="apiKey" type="password" placeholder="AIza...">
+  <button id="saveKey" value="default" class="primary">حفظ</button>
+ </form>
+</dialog>
+
+<dialog id="countryDialog">
+ <div class="modal countryModal"><button class="x" id="closeCountry">×</button><div id="countryModalBody"></div></div>
+</dialog>
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>
