@@ -44,7 +44,7 @@ function renderTarget(){
  ["الناتج",money(c.gdp)],["السكان",c.pop],["الاستقرار",c.stability],["الجيش",c.army],["الصناعة",c.industry],["الطاقة",c.energy],["التجارة",c.trade],["العلاقة",selected==="DZ"?"—":(c.relation>0?"+"+c.relation:c.relation)]
  ].map(x=>'<div class="metric"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>').join("");
  if(selected==="DZ"){$("#countryActions").innerHTML="<button data-cmd='خصص استثماراً كبيراً للصناعة والبنية التحتية في الجزائر.'>🏭 استثمار داخلي</button><button data-cmd='أطلق إصلاحاً اقتصادياً يرفع الإنتاج ويحافظ على الاستقرار.'>📈 إصلاح اقتصادي</button><button data-cmd='زد الإنفاق الدفاعي مع الحفاظ على توازن الميزانية.'>⚔ تطوير الجيش</button>"}
- else{$("#countryActions").innerHTML="<button data-cmd='اقترح اتفاقية تجارية مع "+c.name+" لزيادة التبادل الاقتصادي.'>📦 اتفاق تجاري</button><button data-cmd='اقترح اتفاقية دبلوماسية مع "+c.name+" وتحسين العلاقات.'>🤝 مبادرة دبلوماسية</button><button data-cmd='حلل إمكانية تشكيل تحالف دفاعي مع "+c.name+" داخل اللعبة.'>🛡 تحالف</button>"}
+ else{$("#countryActions").innerHTML="<button data-cmd='اقترح اتفاقية تجارية مع "+c.name+" لزيادة التبادل الاقتصادي.'>📦 اتفاق تجاري</button><button data-cmd='اقترح اتفاقية دبلوماسية مع "+c.name+" وتحسين العلاقات.'>🤝 مبادرة دبلوماسية</button><button data-cmd='حلل إمكانية تشكيل تحالف دفاعي مع "+c.name+" داخل اللعبة.'>🛡 تحالف</button><button data-cmd='ابدأ نزاعاً عسكرياً داخل اللعبة مع "+c.name+" وقيّم النتائج دون تفاصيل تكتيكية.'>⚔ نزاع عسكري</button>"}
  document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>{setCommand(b.dataset.cmd);$("#command").focus()})
 }
 function renderRelations(){
