@@ -1,72 +1,61 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080b12">
-<meta name="description" content="POLX — AI Grand Strategy Sandbox">
-<title>POLX — AI Grand Strategy</title>
-<link rel="stylesheet" href="style.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070a0f"><meta name="description" content="POLX — AI Grand Strategy"><title>POLX — Grand Strategy</title><link rel="stylesheet" href="style.css"></head>
 <body>
-<div class="app">
+<div class="game-shell">
   <aside class="sidebar">
-    <div class="brand"><div class="logo">P</div><div><strong>POLX</strong><small>AI GRAND STRATEGY</small></div></div>
-    <button id="newGame" class="primary">＋ دولة جديدة</button>
+    <div class="brand"><div class="logo">P</div><div><strong>POLX</strong><small>GRAND STRATEGY</small></div></div>
+    <div class="campaign"><span>CAMPAIGN</span><b>عصر التحولات</b><small>العالم رقم #001</small></div>
+    <button id="newGame" class="new-game">＋ حملة جديدة</button>
     <nav>
-      <button class="nav active" data-panel="overview">◈ نظرة عامة</button>
-      <button class="nav" data-panel="economy">◫ الاقتصاد</button>
-      <button class="nav" data-panel="diplomacy">◎ الدبلوماسية</button>
-      <button class="nav" data-panel="government">♜ الحكومة</button>
-      <button class="nav" data-panel="news">▤ الأخبار</button>
+      <button class="nav active" data-panel="overview"><i>⌂</i> غرفة القيادة</button>
+      <button class="nav" data-panel="economy"><i>◫</i> الاقتصاد</button>
+      <button class="nav" data-panel="diplomacy"><i>◎</i> العالم</button>
+      <button class="nav" data-panel="government"><i>♜</i> الحكومة</button>
+      <button class="nav" data-panel="news"><i>▤</i> الأخبار</button>
     </nav>
-    <div class="side-bottom">
-      <button id="settings" class="nav">⚙ إعدادات Gemini</button>
-      <button id="reset" class="nav danger">↻ إعادة العالم</button>
-    </div>
+    <div class="side-bottom"><button id="settings" class="nav"><i>⚙</i> محرك الذكاء</button><button id="reset" class="nav danger"><i>↻</i> إعادة الحملة</button></div>
   </aside>
 
   <main class="main">
-    <header class="top">
-      <div><span class="eyebrow">WORLD SIMULATION</span><h1 id="countryTitle">الجمهورية الجديدة</h1><p id="dateLine">السنة 2028 • الربيع • الدور 1</p></div>
-      <div class="top-actions"><span class="model-pill">● gemini-3-flash-preview</span><button id="settingsTop">⚙</button></div>
+    <header class="topbar">
+      <div class="date"><span class="live-dot"></span><div><b id="countryTitle">جمهورية POLX</b><small id="dateLine">2028 • الربيع • الدور 1</small></div></div>
+      <div class="top-center"><span class="world-status">● العالم مستقر</span></div>
+      <div class="top-actions"><span class="model-pill">GEMINI 3 FLASH</span><button id="settingsTop">⚙</button></div>
     </header>
 
     <section id="overview" class="panel active">
-      <div class="hero">
-        <div><span class="eyebrow">رئاسة الدولة</span><h2>أنت تقود الدولة. <em>العالم لا ينتظرك.</em></h2><p>اكتب أي قرار تريده بحرية. المحرك يحاول تحويله إلى آثار اقتصادية واجتماعية ودبلوماسية وأحداث مستقبلية.</p></div>
-        <div class="turn-box"><b id="turn">01</b><span>الدور</span></div>
+      <div class="map-hero">
+        <div class="map-grid"></div><div class="map-lines"></div>
+        <div class="hero-copy"><span class="eyebrow">رئيس الدولة</span><h1>مستقبل <em>POLX</em> بين يديك.</h1><p>كل قرار يغيّر الاقتصاد، المجتمع، العلاقات والعالم من حولك.</p><div class="turn-chip">الدور <b id="turn">01</b></div></div>
+        <div class="country-sigil">P</div>
       </div>
+
       <div id="stats" class="stats"></div>
-      <div class="grid">
-        <section class="card command-card">
-          <div class="card-head"><div><span class="eyebrow">COMMAND CENTER</span><h3>ماذا ستفعل؟</h3></div><span class="live">LIVE</span></div>
-          <div class="command-examples">
-            <button data-command="أطلق برنامجاً وطنياً لتطوير الصناعة المحلية وخصص له 5 مليارات من الخزينة.">🏭 تطوير الصناعة</button>
-            <button data-command="أعلن اتفاقاً تجارياً جديداً مع دولة مجاورة وخفض الرسوم الجمركية تدريجياً.">🤝 اتفاق تجاري</button>
-            <button data-command="أريد خطة لخفض التضخم دون التسبب في ركود اقتصادي.">📉 مكافحة التضخم</button>
-            <button data-command="أطلق استراتيجية وطنية للطاقة المتجددة على مدى عشر سنوات.">⚡ الطاقة</button>
+
+      <div class="section-label"><span>غرفة القيادة</span><small>اتخذ قرارك التالي</small></div>
+      <div class="command-layout">
+        <section class="command-card">
+          <div class="command-head"><div><span class="eyebrow">PRESIDENTIAL ORDERS</span><h2>ما هو قرارك؟</h2></div><span class="ai-badge">AI SIMULATION</span></div>
+          <div class="quick-actions">
+            <button data-command="أطلق برنامجاً وطنياً لتطوير الصناعة المحلية وخصص له 5 مليارات من الخزينة."><b>🏭</b><span>الصناعة<small>استثمار</small></span></button>
+            <button data-command="أعلن اتفاقاً تجارياً جديداً مع دولة مجاورة وخفض الرسوم الجمركية تدريجياً."><b>🤝</b><span>التجارة<small>دبلوماسية</small></span></button>
+            <button data-command="أريد خطة لخفض التضخم دون التسبب في ركود اقتصادي."><b>📉</b><span>الاقتصاد<small>استقرار</small></span></button>
+            <button data-command="أطلق استراتيجية وطنية للطاقة المتجددة على مدى عشر سنوات."><b>⚡</b><span>الطاقة<small>مستقبل</small></span></button>
           </div>
-          <form id="commandForm" class="command-box">
-            <textarea id="command" rows="3" placeholder="مثال: أريد تحويل 10% من الميزانية إلى التعليم وبناء جامعات جديدة..."></textarea>
-            <div><span>AI سيحلل القرار والعواقب المحتملة</span><button id="execute" type="submit">تنفيذ القرار ↵</button></div>
-          </form>
+          <form id="commandForm" class="command-box"><textarea id="command" rows="4" placeholder="اكتب قرارك بحرية...&#10;مثال: أريد زيادة الإنفاق على التعليم وبناء جامعات جديدة."></textarea><div class="command-foot"><span>↳ POLX AI سيحاكي النتائج والعواقب</span><button id="execute" type="submit">تنفيذ القرار <b>↵</b></button></div></form>
         </section>
-        <section class="card feed-card"><div class="card-head"><div><span class="eyebrow">WORLD FEED</span><h3>آخر التطورات</h3></div></div><div id="feed"></div></section>
+        <aside class="feed-card"><div class="feed-head"><div><span class="eyebrow">WORLD INTELLIGENCE</span><h3>نبض العالم</h3></div><span class="pulse"></span></div><div id="feed"></div></aside>
       </div>
     </section>
 
-    <section id="economy" class="panel"><div class="section-title"><span class="eyebrow">ECONOMY</span><h2>اقتصاد الدولة</h2></div><div id="economyGrid" class="detail-grid"></div></section>
-    <section id="diplomacy" class="panel"><div class="section-title"><span class="eyebrow">DIPLOMACY</span><h2>العلاقات الدولية</h2></div><div id="diplomacyGrid" class="country-grid"></div></section>
-    <section id="government" class="panel"><div class="section-title"><span class="eyebrow">GOVERNMENT</span><h2>الحكومة</h2></div><div id="governmentGrid" class="detail-grid"></div></section>
-    <section id="news" class="panel"><div class="section-title"><span class="eyebrow">NEWSROOM</span><h2>أرشيف العالم</h2></div><div id="newsGrid" class="news-list"></div></section>
+    <section id="economy" class="panel"><div class="section-title"><span class="eyebrow">NATIONAL ECONOMY</span><h2>الاقتصاد</h2><p>المؤشرات التي تحدد قوة دولتك واستقرارها.</p></div><div id="economyGrid" class="detail-grid"></div></section>
+    <section id="diplomacy" class="panel"><div class="section-title"><span class="eyebrow">WORLD MAP</span><h2>العالم والدبلوماسية</h2><p>العالم يتفاعل مع قراراتك.</p></div><div id="diplomacyGrid" class="country-grid"></div></section>
+    <section id="government" class="panel"><div class="section-title"><span class="eyebrow">CABINET</span><h2>الحكومة</h2><p>فريقك يساعدك، لكن لكل وزير رؤيته وأولوياته.</p></div><div id="governmentGrid" class="detail-grid"></div></section>
+    <section id="news" class="panel"><div class="section-title"><span class="eyebrow">GLOBAL NEWS</span><h2>الأخبار</h2><p>سجل الأحداث والقرارات التي غيّرت عالمك.</p></div><div id="newsGrid" class="news-list"></div></section>
   </main>
 </div>
 
-<dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal">
-<button type="button" id="closeSettings" class="close">×</button><span class="eyebrow">AI ENGINE</span><h2>إعدادات POLX</h2>
-<p>POLX يعتمد حالياً على <b>gemini-3-flash-preview</b> فقط.</p>
-<label>Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div>
-<button class="save" type="submit">حفظ</button><small>المفتاح يبقى في هذا المتصفح ولا يوضع في GitHub.</small>
-</form></dialog>
+<dialog id="settingsDialog"><form method="dialog" id="settingsForm" class="modal"><button type="button" id="closeSettings" class="close">×</button><span class="eyebrow">AI ENGINE</span><h2>محرك POLX</h2><p>المحرك الحالي: <b>gemini-3-flash-preview</b></p><label>Gemini API Key</label><div class="key-row"><input id="apiKey" type="password" placeholder="AIza..." autocomplete="off"><button type="button" id="toggleKey">إظهار</button></div><button class="save" type="submit">حفظ الإعدادات</button><small>المفتاح محفوظ محلياً في هذا المتصفح.</small></form></dialog>
 <script src="app.js"></script>
 </body></html>
