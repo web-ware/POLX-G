@@ -163,7 +163,7 @@ function applyAI(result,command){
   const entry=Object.entries(WORLD_COUNTRIES).find(([,c])=>c.name===r.name);
   if(entry)state.relations[entry[0]]=clamp((state.relations[entry[0]]??entry[1].relation)+r.change,-100,100);
  });
- addFeed(result.event_title,result.summary,"قرار");
+ addFeed(result.event_title,result.summary,"قرار • "+(result._model||MODELS[0]));
  if(result.news)addFeed("خبر دولي",result.news,"أخبار");
  addAlert("قرار جديد",result.event_title+" — "+result.summary);
  addHistory(command,result);
@@ -181,53 +181,29 @@ effects.gdp تغيير بالنقاط في الناتج المحلي، effects.a
 أمر اللاعب: ${command}`;
 }
 
-async function askGemini(key,command,attempt=1){
- const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{
-  method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
-  body:JSON.stringify({
-   contents:[{role:"user",parts:[{text:command}]}],
-   systemInstruction:{parts:[{text:buildSystem(command)}]},
-   generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
-  })
- });
- const data=await res.json();
- if(!res.ok)throw new Error(data?.error?.message||"تعذر الاتصال بالمحرك");
- const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
- const result=normalizeResult(extractJSON(raw));
- if(result)return result;
- if(attempt<2){
-  return askGemini(key,command+"\nأعد المحاولة: JSON فقط، ويجب أن يبدأ مباشرة بـ { وينتهي بـ }.",2);
+async function askGemini(key,command){
+ let lastError=null;
+ for(const model of MODELS){
+  try{
+   const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":key},
+    body:JSON.stringify({
+     contents:[{role:"user",parts:[{text:command}]}],
+     systemInstruction:{parts:[{text:buildSystem(command)}]},
+     generationConfig:{temperature:.65,maxOutputTokens:500,responseMimeType:"application/json"}
+    })
+   });
+   const data=await res.json();
+   if(!res.ok){
+    lastError=new Error(data?.error?.message||("فشل "+model));
+    continue;
+   }
+   const raw=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+   const result=normalizeResult(extractJSON(raw));
+   if(result)return {...result,_model:model};
+   lastError=new Error("نتيجة غير منظمة من "+model);
+  }catch(err){lastError=err}
  }
- throw new Error("المحرك أرسل نتيجة غير منظمة بعد محاولتين.");
-}
-
-async function execute(command){
- const key=localStorage.getItem(KEY);
- if(!key){openSettings();return}
- busy=true;$("#execute").disabled=true;$("#execute").textContent="جاري المحاكاة…";
- try{
-  const result=await askGemini(key,command);
-  applyAI(result,command);
- }catch(err){
-  addFeed("تعذر تنفيذ القرار","لم يُحتسب الدور لأن المحرك لم يعط نتيجة صالحة: "+err.message,"خطأ");
-  addAlert("تنبيه AI","لم يُحتسب هذا القرار. عدّل الأمر أو أعد الإرسال.");
-  save();render();
- }finally{
-  busy=false;$("#execute").disabled=false;$("#execute").textContent="تنفيذ القرار ↵";
- }
-}
-
-function openSettings(){apiKey.value=localStorage.getItem(KEY)||"";$("#settingsDialog").showModal()}
-const apiKey=$("#apiKey");
-$("#settings").onclick=openSettings;$("#settingsTop").onclick=openSettings;
-$("#closeSettings").onclick=()=>$("#settingsDialog").close();
-$("#toggleKey").onclick=()=>{apiKey.type=apiKey.type==="password"?"text":"password";$("#toggleKey").textContent=apiKey.type==="password"?"إظهار":"إخفاء"};
-$("#settingsForm").addEventListener("submit",e=>{e.preventDefault();localStorage.setItem(KEY,apiKey.value.trim());$("#settingsDialog").close()});
-$("#commandForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#command").value.trim();if(v&&!busy)execute(v)});
-document.querySelectorAll("[data-command]").forEach(b=>b.onclick=()=>setCommand(b.dataset.command,false));
-$("#newGame").onclick=()=>{if(confirm("بدء عالم جديد وحذف تقدم العالم الحالي؟")){state=structuredClone(defaultState);lastDecision="";$("#command").value="";save();render()}};
-$("#reset").onclick=()=>{if(confirm("إعادة الحملة بالكامل؟")){state=structuredClone(defaultState);lastDecision="";$("#command").value="";save();render()}};
-$("#closeCountry").onclick=()=>$("#countryDialog").close();
-$("#command").addEventListener("input",updateLastDecision);
-render();
-initGlobe();
+ throw lastError||new Error("تعذر الحصول على استجابة من نماذج Gemini");
+};
