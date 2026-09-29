@@ -134,7 +134,7 @@ function nextTurn(){
 function extractJSON(raw){
  if(!raw)return null;
  let text=String(raw).trim();
- const fence="\\x60\\x60\\x60";
+ const fence="\x60\x60\x60";
  text=text.replace(new RegExp("^"+fence+"(?:json)?\\s*","i"),"").replace(new RegExp("\\s*"+fence+"$"),"").trim();
  try{return JSON.parse(text)}catch{}
  const start=text.indexOf("{"),end=text.lastIndexOf("}");
