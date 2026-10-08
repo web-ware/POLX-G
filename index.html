@@ -1,4 +1,54 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07100d"><title>POLX-G — Global Strategy</title><link rel="stylesheet" href="style.css"><script src="https://cdn.amcharts.com/lib/5/index.js"></script><script src="https://cdn.amcharts.com/lib/5/map.js"></script><script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script><script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script></head><body>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#07100d">
+    <title>POLX-G — Global Strategy</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- مكتبات الخريطة (amCharts) -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+
+    <!-- ربط Firebase وتفعيل الدخول المجهول (Anonymous Authentication) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+      import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+      import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAGV17ur-5t85KJCrKNXPqEXoJXhQAUbdQ",
+        authDomain: "polx-g.firebaseapp.com",
+        databaseURL: "https://polx-g-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "polx-g",
+        storageBucket: "polx-g.firebasestorage.app",
+        messagingSenderId: "394455919175",
+        appId: "1:394455919175:web:fcf20198db242fd82a9f62",
+        measurementId: "G-0B2M9NFXHK"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getDatabase(app);
+
+      // معلومات خفية جانبية: هل تعلم أن استخدامك لـ signInAnonymously يمنح اللاعب جلسة آمنة تماماً بدون الحاجة لكلمة سر، وهو نفس النظام الذي تستخدمه أكبر ألعاب الـ Web3 والمنصات لتقليل احتكاك المستخدمين الجدد؟ حيلة تقنية ذكية جداً لرفع نسبة الاحتفاظ باللاعبين!
+      signInAnonymously(auth)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log("🚀 تم تسجيل دخول اللاعب بنجاح، الكود التعريفي (UID) هو:", user.uid);
+          
+          // نقدر نخلو الـ db و user.uid جاهزين للاستعمال في باقي ملفات الـ JS تاع اللعبة
+          window.gameDB = db;
+          window.playerUID = user.uid;
+        })
+        .catch((error) => {
+          console.error("❌ خطأ في تسجيل الدخول:", error.code, error.message);
+        });
+    </script>
+</head><body>
 <div id="loginScreen" class="screen"><div class="loginCard"><div class="logo">POLX<span>G</span></div><p class="kicker">GLOBAL STRATEGY • ONLINE</p><h1>ادخل إلى العالم</h1><p class="muted">اكتب كود دولتك للدخول، أو سجّل دولة جديدة إذا كنت أول مرة.</p><input id="accessCode" class="bigInput" maxlength="8" placeholder="كود الدولة" autocomplete="off"><div class="loginActions"><button id="watchBtn" class="ghost">👁 مشاهدة العالم</button><button id="registerBtn" class="primary">🌍 تسجيل دولة</button></div><small id="loginStatus" class="status"></small></div></div>
 <div id="setupScreen" class="screen hidden"><div class="setupCard"><div class="logo">POLX<span>G</span></div><p class="kicker">تأسيس دولة جديدة</p><h1>اختار أرضك</h1><p class="muted">اضغط على دولة غير محجوزة في الكرة، ثم اختر الاسم واللون.</p><div class="setupGrid"><div id="setupGlobe" class="setupGlobe"></div><div class="setupForm"><label>اسم الدولة<input id="countryName" maxlength="28" placeholder="مثال: الجمهورية الجديدة"></label><label>اسم الحاكم<input id="leaderName" maxlength="24" placeholder="اسمك داخل اللعبة"></label><label>لون الدولة<input id="countryColor" type="color" value="#35b77a"></label><div id="selectedCountry" class="selectedCountry">لم تختر دولة بعد</div><button id="createCountryBtn" class="primary wide">تأسيس الدولة</button><button id="backLoginBtn" class="ghost wide">رجوع</button></div></div></div></div>
 <div id="gameScreen" class="hidden"><header class="topbar"><div class="brand"><div class="brandMark">PX</div><div><strong>POLX-G</strong><span>GLOBAL STRATEGY</span></div></div><div class="nationChip"><span id="myFlag">🏳️</span><div><b id="myName">—</b><small id="turnLabel">الدور 1</small></div></div><div id="topStats" class="topStats"></div><div class="topActions"><button id="saveBtn">حفظ</button><button id="logoutBtn">خروج</button></div></header>
