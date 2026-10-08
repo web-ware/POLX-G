@@ -1,57 +1,272 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#07100d">
-    <title>POLX-G — Global Strategy</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- مكتبات الخريطة (amCharts) -->
-    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
-    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
-    <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سيادة العالم - النسخة الحية العصرية</title>
+    <style>
+        :root {
+            --bg: #090d16;
+            --panel: #111827;
+            --panel-border: #1f2937;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.4);
+            --danger: #ef4444;
+            --text: #f3f4f6;
+            --text-dim: #9ca3af;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        
+        .hidden { display: none !important; }
+        
+        /* شاشة الدخول والتسجيل العصرية */
+        .screen-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%); }
+        .card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px; padding: 32px; width: 100%; max-width: 420px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); text-align: center; }
+        .card h1 { font-size: 26px; margin-bottom: 8px; color: #fff; background: linear-gradient(to left, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+        input, select { width: 100%; padding: 12px 16px; background: #030712; border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; font-size: 15px; margin-bottom: 16px; outline: none; transition: border 0.3s; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; margin-bottom: 10px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); }
 
-    <!-- ربط Firebase وتفعيل الدخول المجهول (Anonymous Authentication) -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-      import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
-      import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+        /* واجهة اللعبة الحية */
+        .game-layout { display: grid; grid-template-columns: 320px 1fr 350px; height: 100vh; }
+        @media(max-width: 1024px) { .game-layout { grid-template-columns: 1fr; height: auto; } }
+        
+        .sidebar { background: var(--panel); border-left: 1px solid var(--panel-border); display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; gap: 12px; }
+        .flag-lg { font-size: 32px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px; }
+        .stat-box { background: #030712; border: 1px solid var(--panel-border); padding: 12px; border-radius: 8px; text-align: center; }
+        .stat-box small { color: var(--text-dim); display: block; font-size: 12px; }
+        .stat-box b { font-size: 16px; color: #fff; }
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyAGV17ur-5t85KJCrKNXPqEXoJXhQAUbdQ",
-        authDomain: "polx-g.firebaseapp.com",
-        databaseURL: "https://polx-g-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "polx-g",
-        storageBucket: "polx-g.firebasestorage.app",
-        messagingSenderId: "394455919175",
-        appId: "1:394455919175:web:fcf20198db242fd82a9f62",
-        measurementId: "G-0B2M9NFXHK"
-      };
+        .actions-section { padding: 16px; border-top: 1px solid var(--panel-border); }
+        .actions-section h3 { font-size: 14px; color: var(--text-dim); margin-bottom: 10px; }
+        .action-btn { width: 100%; padding: 10px; background: #1f2937; border: 1px solid #374151; color: #fff; border-radius: 6px; margin-bottom: 8px; text-align: right; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+        .action-btn:hover { background: #374151; border-color: var(--accent); }
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getDatabase(app);
+        /* منطقة الخريطة العصرية والفاعلة */
+        .main-map-area { display: flex; flex-direction: column; height: 100vh; background: #050811; position: relative; }
+        .top-bar { padding: 16px 24px; background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--panel-border); display: flex; justify-content: space-between; align-items: center; }
+        .live-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--accent); }
+        .pulse-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 0 var(--accent-glow); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 var(--accent-glow); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-      // معلومات خفية جانبية: هل تعلم أن استخدامك لـ signInAnonymously يمنح اللاعب جلسة آمنة تماماً بدون الحاجة لكلمة سر، وهو نفس النظام الذي تستخدمه أكبر ألعاب الـ Web3 والمنصات لتقليل احتكاك المستخدمين الجدد؟ حيلة تقنية ذكية جداً لرفع نسبة الاحتفاظ باللاعبين!
-      signInAnonymously(auth)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          console.log("🚀 تم تسجيل دخول اللاعب بنجاح، الكود التعريفي (UID) هو:", user.uid);
-          
-          // نقدر نخلو الـ db و user.uid جاهزين للاستعمال في باقي ملفات الـ JS تاع اللعبة
-          window.gameDB = db;
-          window.playerUID = user.uid;
-        })
-        .catch((error) => {
-          console.error("❌ خطأ في تسجيل الدخول:", error.code, error.message);
+        .map-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; overflow: hidden; }
+        
+        /* شات الحكام الحي في الأسفل */
+        .live-chat-box { height: 180px; background: var(--panel); border-top: 1px solid var(--panel-border); display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+        .chat-msg { background: #030712; padding: 6px 10px; border-radius: 6px; border-right: 3px solid var(--accent); }
+        .chat-input-row { display: flex; border-top: 1px solid var(--panel-border); }
+        .chat-input-row input { border: none; margin: 0; border-radius: 0; background: #030712; }
+        .chat-input-row button { width: 120px; border-radius: 0; margin: 0; background: var(--accent); border: none; color: #fff; font-weight: bold; cursor: pointer; }
+
+        /* نافذة اختيار الدول الحية */
+        .countries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 350px; overflow-y: auto; margin-bottom: 16px; padding: 4px; }
+        .country-card { background: #030712; border: 1px solid var(--panel-border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .country-card:hover, .country-card.selected { border-color: var(--accent); background: rgba(16, 185, 129, 0.1); }
+        .country-card span { font-size: 24px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginScreen" class="screen-center">
+        <div class="card">
+            <h1>سيادة العالم</h1>
+            <p>لعبة استراتيجية حية تفاعلية بين اللاعبين</p>
+            <input type="text" id="accessCode" placeholder="أدخل كود الدولة الخاص بك...">
+            <button class="btn" onclick="login()">دخول إلى الحكم 🚀</button>
+            <button class="btn" style="background:#374151" onclick="showSetup()">تأسيس دولة جديدة 🌍</button>
+        </div>
+    </div>
+
+    <!-- شاشة تأسيس دولة -->
+    <div id="setupScreen" class="screen-center hidden">
+        <div class="card" style="max-width: 500px;">
+            <h1>اختر دولتك وابدأ السيادة</h1>
+            <p>اختر دولتك من القائمة أدناه وحدد اسم حاكمك:</p>
+            <div id="countriesList" class="countries-grid"></div>
+            <input type="text" id="leaderName" placeholder="اسم الحاكم أو القائد...">
+            <button class="btn" onclick="createCountry()">إعلان قيادة الدولة 🔥</button>
+            <button class="btn" style="background:transparent; color:var(--text-dim)" onclick="setScreen('loginScreen')">رجوع</button>
+        </div>
+    </div>
+
+    <!-- واجهة اللعبة الرئيسية الحية -->
+    <div id="gameScreen" class="game-layout hidden">
+        <!-- لوحة التحكم الجانبية للدولة -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span id="myFlag" class="flag-lg">🇩🇿</span>
+                <div>
+                    <h2 id="myName" style="font-size: 18px;">الجزائر</h2>
+                    <small id="stabilityBadge" style="color: var(--accent);">مستقرة وعظمى</small>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box"><small>💰 الخزينة</small><b id="statTreasury">$120B</b></div>
+                <div class="stat-box"><small>📈 الناتج المحلي</small><b id="statGdp">$267B</b></div>
+                <div class="stat-box"><small>🛡️ الجيش</small><b id="statArmy">35</b></div>
+                <div class="stat-box"><small>😊 رضا الشعب</small><b id="statApproval">65%</b></div>
+            </div>
+
+            <div class="actions-section">
+                <h3>قرارات داخلية فورية</h3>
+                <button class="action-btn" onclick="quickAction('economy')">🏭 استثمار في الاقتصاد (-30$)</button>
+                <button class="action-btn" onclick="quickAction('army')">⚔️ تجنيد وتطوير الجيش (-25$)</button>
+                <button class="action-btn" onclick="quickAction('research')">🔬 أبحاث وتقسيم صناعي (-35$)</button>
+            </div>
+
+            <div class="actions-section" style="margin-top: auto;">
+                <button class="btn btn-danger" onclick="logout()">خروج من الجلسة</button>
+            </div>
+        </div>
+
+        <!-- المنطقة الوسطى (الخريطة الحية المباشرة) -->
+        <div class="main-map-area">
+            <div class="top-bar">
+                <div class="live-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>عالم حي ومتصل (Real-Time Live)</span>
+                </div>
+                <div id="onlinePlayersCount" style="font-size: 14px; color: var(--text-dim);">الحكام المتصلون: 1</div>
+            </div>
+
+            <div class="map-container">
+                <div style="text-align: center; color: var(--text-dim);">
+                    <h2 style="color: #fff; margin-bottom: 8px;">خريطة العمليات المباشرة</h2>
+                    <p>انقر على أي دولة في القائمة أدناه أو تواصل مع الحكام عبر شات العالم المباشر في الأسفل.</p>
+                </div>
+            </div>
+
+            <!-- شات الحكام الحي -->
+            <div class="live-chat-box">
+                <div id="chatMessages" class="chat-messages">
+                    <div class="chat-msg"><b>النظام:</b> مرحباً بك في ساحة السيادة الحية. تحدث مع الزعماء الآخرين بحرية!</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="اكتب رسالتك لجميع حكام العالم واضغط إرسال...">
+                    <button onclick="sendChat()">إرسال 💬</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- لوحة العلاقات والأهداف الجانبية الأخرى -->
+        <div class="sidebar" style="border-left: none; border-right: 1px solid var(--panel-border);">
+            <div class="sidebar-header">
+                <h3>🌐 شبكة العلاقات والدول</h3>
+            </div>
+            <div id="worldPowersList" style="padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
+                <!-- يتم تعبئتها ديناميكياً -->
+            </div>
+        </div>
+    </div>
+
+    <!-- سكربت التحكم الحي (قابل للربط مع Firebase أو السيرفر الحي) -->
+    <script>
+        const FLAGS = { DZ: "🇩🇿", MA: "🇲🇦", TN: "🇹🇳", EG: "🇪🇬", FR: "🇫🇷", US: "🇺🇸", CN: "🇨🇳", TR: "🇹🇷", SA: "🇸🇦" };
+        let gameState = {
+            countryId: "DZ",
+            countryName: "الجزائر",
+            treasury: 120,
+            gdp: 267,
+            army: 35,
+            approval: 65,
+            chat: []
+        };
+
+        function setScreen(id) {
+            ["loginScreen", "setupScreen", "gameScreen"].forEach(s => document.getElementById(s).classList.add("hidden"));
+            document.getElementById(id).classList.remove("hidden");
+        }
+
+        function showSetup() {
+            setScreen('setupScreen');
+            const list = document.getElementById('countriesList');
+            list.innerHTML = Object.keys(FLAGS).map(id => `
+                <div class="country-card" onclick="selectCountryCard('${id}', this)">
+                    <span>${FLAGS[id]}</span>
+                    <b>${id}</b>
+                </div>
+            `).join('');
+        }
+
+        let selectedSetupId = "DZ";
+        function selectCountryCard(id, el) {
+            document.querySelectorAll('.country-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedSetupId = id;
+        }
+
+        function createCountry() {
+            gameState.countryId = selectedSetupId;
+            gameState.countryName = "دولة " + selectedSetupId;
+            setScreen('gameScreen');
+            updateUI();
+        }
+
+        function login() {
+            setScreen('gameScreen');
+            updateUI();
+        }
+
+        function logout() {
+            setScreen('loginScreen');
+        }
+
+        function updateUI() {
+            document.getElementById('myFlag').textContent = FLAGS[gameState.countryId] || "🏳️";
+            document.getElementById('myName').textContent = gameState.countryName;
+            document.getElementById('statTreasury').textContent = "$" + gameState.treasury + "B";
+            document.getElementById('statGdp').textContent = "$" + gameState.gdp + "B";
+            document.getElementById('statArmy').textContent = gameState.army;
+            document.getElementById('statApproval').textContent = gameState.approval + "%";
+        }
+
+        function quickAction(type) {
+            if (type === 'economy' && gameState.treasury >= 30) {
+                gameState.treasury -= 30;
+                gameState.gdp += 15;
+            } else if (type === 'army' && gameState.treasury >= 25) {
+                gameState.treasury -= 25;
+                gameState.army += 5;
+            } else if (type === 'research' && gameState.treasury >= 35) {
+                gameState.treasury -= 35;
+                gameState.gdp += 10;
+                gameState.army += 2;
+            } else {
+                alert("الرصيد لا يكفي لتنفيذ القرار الفوري!");
+            }
+            updateUI();
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            const chatBox = document.getElementById('chatMessages');
+            chatBox.innerHTML += `<div class="chat-msg"><b>${gameState.countryName}:</b> ${text}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = "";
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendChat();
         });
+
+        // محاكاة النمو الاقتصادي الحي كل 5 ثوانٍ تلقائياً
+        setInterval(() => {
+            gameState.treasury += Math.floor(gameState.gdp * 0.005);
+            updateUI();
+        }, 5000);
     </script>
-</head><body>
-<div id="loginScreen" class="screen"><div class="loginCard"><div class="logo">POLX<span>G</span></div><p class="kicker">GLOBAL STRATEGY • ONLINE</p><h1>ادخل إلى العالم</h1><p class="muted">اكتب كود دولتك للدخول، أو سجّل دولة جديدة إذا كنت أول مرة.</p><input id="accessCode" class="bigInput" maxlength="8" placeholder="كود الدولة" autocomplete="off"><div class="loginActions"><button id="watchBtn" class="ghost">👁 مشاهدة العالم</button><button id="registerBtn" class="primary">🌍 تسجيل دولة</button></div><small id="loginStatus" class="status"></small></div></div>
-<div id="setupScreen" class="screen hidden"><div class="setupCard"><div class="logo">POLX<span>G</span></div><p class="kicker">تأسيس دولة جديدة</p><h1>اختار أرضك</h1><p class="muted">اضغط على دولة غير محجوزة في الكرة، ثم اختر الاسم واللون.</p><div class="setupGrid"><div id="setupGlobe" class="setupGlobe"></div><div class="setupForm"><label>اسم الدولة<input id="countryName" maxlength="28" placeholder="مثال: الجمهورية الجديدة"></label><label>اسم الحاكم<input id="leaderName" maxlength="24" placeholder="اسمك داخل اللعبة"></label><label>لون الدولة<input id="countryColor" type="color" value="#35b77a"></label><div id="selectedCountry" class="selectedCountry">لم تختر دولة بعد</div><button id="createCountryBtn" class="primary wide">تأسيس الدولة</button><button id="backLoginBtn" class="ghost wide">رجوع</button></div></div></div></div>
-<div id="gameScreen" class="hidden"><header class="topbar"><div class="brand"><div class="brandMark">PX</div><div><strong>POLX-G</strong><span>GLOBAL STRATEGY</span></div></div><div class="nationChip"><span id="myFlag">🏳️</span><div><b id="myName">—</b><small id="turnLabel">الدور 1</small></div></div><div id="topStats" class="topStats"></div><div class="topActions"><button id="saveBtn">حفظ</button><button id="logoutBtn">خروج</button></div></header>
-<main class="layout"><aside class="sidebar left"><section class="panel"><div class="panelHead"><b>ملف الدولة</b><span id="stabilityBadge">—</span></div><div class="gdp"><small>الناتج الوطني</small><strong id="gdp">—</strong></div><div class="statRows" id="myStats"></div></section><section class="panel"><div class="panelHead"><b>أوامر سريعة</b><small>الدور الحالي</small></div><div class="actionGrid"><button data-action="economy">🏭<span>اقتصاد</span></button><button data-action="army">🛡️<span>دفاع</span></button><button data-action="research">🔬<span>تطوير</span></button><button data-action="diplomacy">🤝<span>دبلوماسية</span></button></div></section><section class="panel"><div class="panelHead"><b>الأخبار</b><small id="newsCount">0</small></div><div id="news" class="news"></div></section></aside>
-<section class="mapArea"><div class="mapToolbar"><div><b>العالم</b><small>كرة سياسية ثابتة • اضغط دولة</small></div><div class="mapModes"><button class="active" data-mode="political">سياسي</button><button data-mode="economy">اقتصاد</button><button data-mode="relations">علاقات</button></div><span class="live"><i></i> مباشر</span></div><div id="globe" class="globe"></div><div class="mapHint">اسحب للدوران • عجلة للتكبير • اضغط لاختيار دولة</div><div class="commandDock"><div class="commandTop"><b>مركز القيادة</b><span id="selectedHint">اختر دولة من الخريطة</span></div><div id="commandPreview" class="preview">الدولة التي تختارها ستظهر هنا.</div><div class="commandRow"><input id="command" placeholder="اكتب قراراً أو استخدم الأزرار…"><button id="executeBtn" class="primary">تنفيذ</button><button id="endTurnBtn" class="end">نهاية الدور ▶</button></div></div></section>
-<aside class="sidebar right"><section class="panel target"><div class="panelHead"><b><span id="targetFlag">🌍</span> <span id="targetName">الدولة المحددة</span></b><small id="targetOwner">—</small></div><div id="targetInfo" class="targetInfo">اضغط دولة على الخريطة.</div><div id="targetActions" class="targetActions"></div></section><section class="panel"><div class="panelHead"><b>العلاقات</b><small>الدول الملعوبة</small></div><div id="relations" class="relations"></div></section><section class="panel"><div class="panelHead"><b>قواعد اللعبة</b></div><ul class="rules"><li>كل دور = موسم واحد.</li><li>الاقتصاد يزيد الخزينة مع الوقت.</li><li>التحالف يفتح المساعدة العسكرية والمالية.</li><li>الحرب تقلل الاستقرار وتبدأ احتلالاً تدريجياً.</li><li>الدول غير المحجوزة تبقى محايدة حتى يختارها لاعب.</li></ul></section></aside></main></div><div id="toast" class="toast"></div><script type="module" src="app.js"></script></body></html>
+</body>
+</html>
