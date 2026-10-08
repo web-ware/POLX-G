@@ -1,7 +1,7 @@
-import{initializeApp}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import{getAuth,signInAnonymously}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import{getDatabase,ref,get,set,onValue,runTransaction}from"https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
-import{firebaseConfig}from"./config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { getDatabase, ref, get, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+import { firebaseConfig } from "./config.js";
 
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
 const $=s=>document.querySelector(s);
