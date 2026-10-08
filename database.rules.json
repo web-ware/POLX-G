@@ -1,0 +1,1 @@
+{"rules":{".read":"auth != null",".write":"auth != null","players":{"$code":{".validate":"newData.hasChildren(['uid','countryId','leaderName'])"}},"world":{".validate":"newData.hasChildren(['year','season','turn','countries','news'])"}}}
