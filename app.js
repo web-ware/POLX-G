@@ -84,20 +84,143 @@ async function createCountry(){
  myCode=ccode;myCountryId=id;spectator=false;toast("دولتك تأسست • الكود: "+ccode);setScreen("gameScreen");await refreshWorld()
 }
 function addNews(state,title,text){state.news=state.news||[];state.news.unshift({title,text});state.news=state.news.slice(0,20)}
-async function doAction(action,targetId){
+
+// --- الدالة المحسنة 1: نظام نهاية الدور مع صيانة الجيش والمقاومة ---
+async function endTurn(){
+ if(!my()||spectator){toast("وضع المشاهدة لا يمرر الأدوار");return}
+ const mine=myCountryId;
+ await runTransaction(ref(db,"world"),w=>{
+   const a=w?.countries?.[mine];
+   if(!a||a.ownerUid!==auth.currentUser.uid)return w;
+   
+   w.turn=(w.turn||1)+1;
+   w.season=seasons[(w.turn-1)%4];
+   if(w.turn%4===1)w.year=(w.year||2026)+1;
+   
+   Object.values(w.countries||{}).forEach(c=>{
+     if(c.ownerCode){
+       const armyCost = Math.floor((c.army || 0) * 0.8);
+       let netIncome = Math.floor(c.gdp * 0.015) - armyCost;
+       
+       c.treasury = Math.max(0, (c.treasury || 0) + netIncome);
+       
+       if (c.treasury === 0 && armyCost > 0) {
+         c.army = Math.max(0, c.army - 3);
+         c.stability = Math.max(0, c.stability - 2);
+       }
+
+       c.approval = Math.max(0, Math.min(100, c.approval + (c.stability > 60 ? 1 : -1)));
+       
+       for(const target of Object.keys(c.wars||{})){
+         if(!c.wars[target])continue;
+         const e=w.countries[target];
+         if(!e)continue;
+         
+         const swing = Math.max(1, Math.floor((c.army - e.army) / 15) + 2);
+         e.stability = Math.max(0, e.stability - swing);
+         e.army = Math.max(0, e.army - Math.max(1, Math.floor(swing / 2)));
+         c.army = Math.max(0, c.army - Math.max(1, Math.floor(swing / 3)));
+         
+         e.occupation ??= {};
+         const resistance = Math.floor((e.army || 0) * 0.1);
+         const progress = Math.max(1, swing - resistance);
+         
+         e.occupation[mine] = Math.min(100, (e.occupation[mine] || 0) + progress);
+         
+         if(e.occupation[mine] >= 100){
+           e.ownerUid = c.ownerUid;
+           e.ownerCode = c.ownerCode;
+           e.leaderName = c.leaderName;
+           e.color = c.color;
+           e.wars = {};
+           c.wars[target] = false;
+         }
+       }
+     }
+   });
+   
+   addNews(w, "نهاية الدور", "مرت مرحلة جديدة، وتأثرت خزائن الدول بصيانة الجيوش والحروب المستمرة.");
+   return w;
+ });
+ toast("انتهى الدور وتم خصم مصاريف الجيوش");
+}
+
+// --- الدالة المحسنة 2: الأوامر والدبلوماسية بشروط وتكاليف جديدة ---
+async function doAction(action, targetId){
  if(!my()||spectator||targetId===myCountryId)return;
  const mine=myCountryId;let msg="";
- await runTransaction(ref(db,"world"),w=>{if(!w)return w;const a=w.countries?.[mine],b=w.countries?.[targetId];if(!a||!b||a.ownerUid!==auth.currentUser.uid)return w;a.relations??={};a.alliances??={};b.relations??={};b.alliances??={};
- if(action==="diplomacy"){a.relations[targetId]=Math.min(100,(a.relations[targetId]??0)+10);b.relations[mine]=Math.min(100,(b.relations[mine]??0)+4);msg="تحسنت العلاقات."}
- if(action==="trade"){if((a.relations[targetId]??0)<0){msg="العلاقة سيئة؛ حسّنها أولاً."}else{a.treasury-=10;a.gdp+=5;b.treasury+=8;b.gdp+=3;a.relations[targetId]=Math.min(100,(a.relations[targetId]??0)+4);b.relations[mine]=Math.min(100,(b.relations[mine]??0)+4);msg="تم فتح خط تجاري."}}
- if(action==="alliance"){if((a.relations[targetId]??0)<40){msg="العلاقة تحتاج 40+ لاقتراح التحالف."}else{a.alliances[targetId]=true;b.alliances[mine]=true;msg="تم إنشاء التحالف."}}
- if(action==="moneyAid"){if(!a.alliances?.[targetId]||a.treasury<25){msg="لا يمكن تقديم المساعدة."}else{a.treasury-=25;b.treasury+=25;b.approval=Math.min(100,b.approval+2);msg="أرسلت مساعدة مالية."}}
- if(action==="armyAid"){if(!a.alliances?.[targetId]||a.army<5){msg="لا يمكن تقديم المساعدة."}else{const x=Math.max(1,Math.floor(a.army*.25));a.army-=x;b.army+=x;msg="أرسلت 25% من قوتك العسكرية."}}
- if(action==="war"){if(a.stability<20){msg="الاستقرار منخفض جداً."}else{a.wars[targetId]=true;b.wars[mine]=true;a.relations[targetId]=-100;b.relations[mine]=-100;msg="بدأ النزاع داخل اللعبة."}}
- if(action==="colonize"){b.approval=Math.max(0,b.approval-2);a.prestige=Math.min(100,a.prestige+2);msg="زاد نفوذك السياسي."}
- addNews(w,"دبلوماسية",a.name+" • "+msg);return w});
- toast(msg||"تم تنفيذ القرار")
+ 
+ await runTransaction(ref(db,"world"),w=>{
+   if(!w)return w;
+   const a=w.countries?.[mine], b=w.countries?.[targetId];
+   if(!a||!b||a.ownerUid!==auth.currentUser.uid)return w;
+   
+   a.relations??={}; a.alliances??={}; b.relations??={}; b.alliances??={};
+   
+   if(action==="diplomacy"){
+     if(a.treasury < 10){ msg="تحتاج إلى 10$ على الأقل لتحسين العلاقات الدبلوماسية."; return w; }
+     a.treasury -= 10;
+     a.relations[targetId] = Math.min(100, (a.relations[targetId]??0) + 6);
+     b.relations[mine] = Math.min(100, (b.relations[mine]??0) + 3);
+     msg="تحسنت العلاقات الدبلوماسية بتكلفة مالية.";
+   }
+   else if(action==="trade"){
+     if((a.relations[targetId]??0) < 10){ msg="العلاقة ضعيفة جداً؛ حسّنها أولاً قبل فتح التجارة."; }
+     else {
+       a.treasury -= 15; a.gdp += 8;
+       b.treasury += 12; b.gdp += 5;
+       a.relations[targetId] = Math.min(100, (a.relations[targetId]??0) + 5);
+       msg="تم فتح خط تجاري مربح للطرفين.";
+     }
+   }
+   else if(action==="alliance"){
+     if((a.relations[targetId]??0) < 60){ msg="العلاقة تحتاج إلى 60+ على الأقل لاقتراح التحالف الاستراتيجي."; }
+     else {
+       a.alliances[targetId] = true;
+       b.alliances[mine] = true;
+       msg="تم إبرام معاهدة تحالف رسمي بين الدولتين.";
+     }
+   }
+   else if(action==="moneyAid"){
+     if(!a.alliances?.[targetId] || a.treasury < 40){ msg="لا يمكن تقديم المساعدة (تأكد من وجود تحالف ورصيد 40$)."; }
+     else {
+       a.treasury -= 40; b.treasury += 40;
+       b.approval = Math.min(100, b.approval + 4);
+       msg="أرسلت حزمة مساعدة مالية معتبرة.";
+     }
+   }
+   else if(action==="armyAid"){
+     if(!a.alliances?.[targetId] || a.army < 10){ msg="لا يمكن تقديم مساعدة عسكرية حالياً."; }
+     else {
+       const x = Math.max(2, Math.floor(a.army * 0.2));
+       a.army -= x; b.army += x;
+       msg="أرسلت تعزيزات عسكرية للحليف.";
+     }
+   }
+   else if(action==="war"){
+     if(a.stability < 30){ msg="الاستقرار منخفض جداً، لا يمكنك إعلان الحرب حالياً."; }
+     else {
+       a.wars[targetId] = true; b.wars[mine] = true;
+       a.relations[targetId] = -100; b.relations[mine] = -100;
+       msg="تم إعلان الحرب رسمياً وانطلاق النزاع!";
+     }
+   }
+   else if(action==="colonize"){
+     if(a.treasury < 20){ msg="تحتاج 20$ لبسط النفوذ السياسي."; }
+     else {
+       a.treasury -= 20;
+       b.approval = Math.max(0, b.approval - 4);
+       a.prestige = Math.min(100, a.prestige + 3);
+       msg="نجحت في فرض نفوذ سياسي يرفع هيبتك ويقلق خصمك.";
+     }
+   }
+   
+   addNews(w, "شؤون خارجية", a.name + " • " + msg);
+   return w;
+ });
+ toast(msg || "تم تنفيذ القرار");
 }
+
 async function quick(type){
  if(!my()||spectator)return;
  const mine=myCountryId;
@@ -108,19 +231,12 @@ async function quick(type){
  if(type==="diplomacy"){Object.keys(w.countries||{}).forEach(id=>{if(id!==mine&&w.countries[id].ownerCode)a.relations[id]=Math.min(100,(a.relations[id]??0)+3)})}
  addNews(w,"قرار داخلي",a.name+" نفذت قراراً جديداً.");return w});toast("تم تنفيذ القرار")
 }
-async function endTurn(){
- if(!my()||spectator){toast("وضع المشاهدة لا يمرر الأدوار");return}
- const mine=myCountryId;
- await runTransaction(ref(db,"world"),w=>{const a=w?.countries?.[mine];if(!a||a.ownerUid!==auth.currentUser.uid)return w;
- w.turn=(w.turn||1)+1;w.season=seasons[(w.turn-1)%4];if(w.turn%4===1)w.year=(w.year||2026)+1;
- Object.values(w.countries||{}).forEach(c=>{if(c.ownerCode){c.treasury=Math.max(0,c.treasury+Math.floor(c.gdp*.015));c.approval=Math.max(0,Math.min(100,c.approval+(c.stability>60?1:-1)));for(const target of Object.keys(c.wars||{})){if(!c.wars[target])continue;const e=w.countries[target];if(!e)continue;const swing=Math.max(1,Math.floor((c.army-e.army)/15)+2);e.stability=Math.max(0,e.stability-swing);e.army=Math.max(0,e.army-Math.max(1,Math.floor(swing/2)));c.army=Math.max(0,c.army-Math.max(1,Math.floor(swing/3)));e.occupation??={};e.occupation[mine]=Math.min(100,(e.occupation[mine]||0)+Math.max(1,swing));if(e.occupation[mine]>=100){e.ownerUid=c.ownerUid;e.ownerCode=c.ownerCode;e.leaderName=c.leaderName;e.color=c.color;e.wars={};c.wars[target]=false}}}});addNews(w,"نهاية الدور","مرت مرحلة جديدة وتحركت الاقتصادات والعلاقات.");return w});toast("انتهى الدور")
-}
 function command(){
  const q=$("#command").value.trim();if(!q)return;
  const l=q.toLowerCase();if(l.includes("اقتصاد")||l.includes("استثمار"))quick("economy");else if(l.includes("جيش")||l.includes("دفاع"))quick("army");else if(l.includes("بحث")||l.includes("تطوير"))quick("research");else if(l.includes("دبلوماس"))quick("diplomacy");else toast("استعمل أوامر سريعة أو اختر دولة من الخريطة")
 }
 $("#loginScreen #registerBtn").onclick=register;$("#loginScreen #watchBtn").onclick=async()=>{await authReady();spectator=true;setScreen("gameScreen");toast("دخلت كمشاهد");render()};$("#accessCode").onkeydown=e=>{if(e.key==="Enter")login()};$("#backLoginBtn").onclick=()=>setScreen("loginScreen");$("#createCountryBtn").onclick=createCountry;$("#executeBtn").onclick=command;$("#endTurnBtn").onclick=endTurn;$("#saveBtn").onclick=()=>toast("الحالة محفوظة تلقائياً في Firebase");$("#logoutBtn").onclick=()=>{spectator=false;myCode="";myCountryId="";setScreen("loginScreen")};
-document.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>quick(b.dataset.action));document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-mode]").forEach(x=>x.classList.remove("active"));b.classList.add("active");const mode=b.dataset.mode;if(mapSeries)mapSeries.mapPolygons.template.adapters.add("fill",(fill,t)=>{const id=String(t.dataItem?.get("id")||"").toUpperCase(),c=world.countries?.[id];if(!c)return fill;if(mode==="economy")return am5.color(c.gdp>5000?"#6e8fd1":c.gdp>1000?"#5b7db6":"#465f78");if(mode==="relations"){const r=my()?.relations?.[id]??0;return am5.color(r>40?"#3e9272":r>=0?"#547d6c":"#785f54")}return am5.color(c.color||"#4d514b")})});
+document.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>quick(b.dataset.action));document.querySelectorAll("[data-mode]").forEach(b=>b.opend=()=>{});document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-mode]").forEach(x=>x.classList.remove("active"));b.classList.add("active");const mode=b.dataset.mode;if(mapSeries)mapSeries.mapPolygons.template.adapters.add("fill",(fill,t)=>{const id=String(t.dataItem?.get("id")||"").toUpperCase(),c=world.countries?.[id];if(!c)return fill;if(mode==="economy")return am5.color(c.gdp>5000?"#6e8fd1":c.gdp>1000?"#5b7db6":"#465f78");if(mode==="relations"){const r=my()?.relations?.[id]??0;return am5.color(r>40?"#3e9272":r>=0?"#547d6c":"#785f54")}return am5.color(c.color||"#4d514b")})});
 $("#command").onkeydown=e=>{if(e.key==="Enter")command()};
 async function boot(){try{await authReady();await seed();onValue(ref(db,"world"),s=>{if(s.exists()){world=s.val();world.countries??={};render();if(mapSeries)mapSeries.mapPolygons.invalidate("fill")}});makeGlobe("globe");}catch(e){$("#loginStatus").textContent="Firebase غير مهيأ: افتح config.js وضع إعدادات مشروعك.";console.error(e)}}
 boot();
